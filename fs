@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ -z $1 ]; then
+if [[ ! "$1" =~ [0-9]+ ]]; then
     echo "Usage: fs <integer>"
     echo "Where <integer> is the new font size."
     exit 1
