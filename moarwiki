@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Called "moarwiki", so that after viewing the first 2 paragraphs of a Wikipedia article with
+# the command "wiki <search terms>", you can then enter "moar!!" to view the entire article.
+
+QUERY=$(IFS=+; echo "$*")
+
+LOCATIONLINE=($(curl -vsS https://en.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r'))
+
+if [ -z $LOCATIONLINE ]; then
+    echo No results.
+    exit 1
+fi
+
+URL="${LOCATIONLINE[2]}"
+
+w3m $URL

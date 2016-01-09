@@ -1,0 +1,16 @@
+#!/bin/bash
+
+QUERY=$(IFS=+; echo "$*")
+
+LOCATIONLINE=($(curl -vsS https://en.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r'))
+
+if [ -z $LOCATIONLINE ]; then
+    echo No results.
+    exit 1
+fi
+
+URL="${LOCATIONLINE[2]}"
+
+echo
+
+curl -sS "$URL" | xmlstarlet sel -t -c "//div[@id='mw-content-text']/p[node()][position()<3]" | w3m -T text/html | cat
