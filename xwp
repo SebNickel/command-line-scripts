@@ -1,0 +1,22 @@
+#!/bin/bash
+if [ -z $1 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    echo "Usage: xwp <URL>"
+    echo
+    echo "xml web pager with formatted output."
+    echo "Provides a quick way of viewing web pages' html source code."
+    echo
+    echo "Nontrivial dependencies: xmlstarlet, curl"
+    
+    if [ -z $1 ]; then exit 1; fi
+
+    exit 0
+fi
+
+if [ $# -gt 1 ]; then
+    echo "Too many arguments: $@"
+    echo "\"xwp --help\" for help."
+
+    exit 1
+fi
+
+curl -sS $1 | xmlstarlet fo | less

@@ -1,8 +1,42 @@
 #!/bin/bash
 
-# Called "moarwiki", so that after viewing the first 2 paragraphs of a Wikipedia article with
-# the command "wiki <search terms>", you can then enter "moar!!" to view the entire article.
+if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    echo
+    echo "Usage: moarwiki <search terms>"
+    echo "Or \"moar!!\" immediately after using \"wiki\"."
+    echo
+    echo "If your search terms are matched to a Wikipedia"
+    echo "article by Wikipedia's search engine, that article"
+    echo "will be displayed in the command-line web browser"
+    echo "w3m. (Hit \"q\" to exit w3m.)"
+    echo
+    echo "While moarwiki works as a standalone script, it is"
+    echo "originally an afterthought to the \"wiki\" script."
+    echo "The latter works like moarwiki, but instead of"
+    echo "displaying the whole Wikipedia page it just prints"
+    echo "its first two paragraphs to stdout. Should this"
+    echo "prove unsatisfactorily terse, \"moar!!\" delivers."
+    echo
+    echo "Example: You hear Demon Cat mentioned somewhere"
+    echo "and want to quickly find out what that is, so you"
+    echo "enter \"wiki demon cat\" and are presented with"
+    echo "Wikipedia's first two paragraphs on the beast."
+    echo "Intrigued, you send your command line for \"moar!!\"."
+    echo "Since the bash shell expands \"!!\" to whatever"
+    echo "the user entered last, \"moar!!\" expands to"
+    echo "\"moarwiki demon cat\" and thus delivers the entire"
+    echo "page as desired."
+    echo
+    echo "Nontrivial dependencies: curl, w3m"
+    echo
+    echo "Now go read about Demon Cat."
+    echo
 
+    if [ $# = 0 ]; then exit 1; fi
+
+    exit 0
+fi
+    
 QUERY=$(IFS=+; echo "$*")
 
 LOCATIONLINE=($(curl -vsS https://en.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r'))

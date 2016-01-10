@@ -1,5 +1,30 @@
 #!/bin/bash
 
+if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    echo
+    echo "Usage: wiki <search terms>"
+    echo
+    echo "If your search terms are matched to a Wikipedia"
+    echo "article by Wikipedia's search engine, the first"
+    echo "two paragraphs of this article will be written"
+    echo "to stdout."
+    echo
+    echo "If your search terms land you on a disambiguation"
+    echo "page, the entire list of possible meanings will"
+    echo "be printed. This may be more output than you"
+    echo "expect."
+    echo
+    echo "If the moarwiki script is also installed, you can"
+    echo "then enter \"moar!!\" to view the whole article."
+    echo
+    echo "Nontrivial dependencies: curl, w3m, xmlstarlet"
+    echo
+
+    if [ $# = 0 ]; then exit 1; fi
+    
+    exit 0
+fi
+
 QUERY=$(IFS=+; echo "$*")
 
 LOCATIONLINE=($(curl -vsS https://en.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r'))
@@ -11,6 +36,17 @@ fi
 
 URL="${LOCATIONLINE[2]}"
 
+CONTENTDIV=$( curl -sS "$URL" | xmlstarlet sel -t -c "//div[@id='mw-content-text']" )
+
+FIRSTPARAGRAPH=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][1]" )
+
 echo
 
-curl -sS "$URL" | xmlstarlet sel -t -c "//div[@id='mw-content-text']/p[node()][position()<3]" | w3m -T text/html | cat
+if [[ $FIRSTPARAGRAPH = *"may refer to:</p>" ]]; then
+    LIST=$( echo $CONTENTDIV | xmlstarlet sel -t -c "//*[@id!='toctitle']/h2|//*[@id!='toc']/ul" )
+  
+    echo $FIRSTPARAGRAPH $LIST | w3m -T text/html | cat
+else
+    SECONDPARAGRAPH=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][2]" )
+    echo $FIRSTPARAGRAPH $SECONDPARAGRAPH | w3m -T text/html | cat
+fi
