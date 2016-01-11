@@ -1,0 +1,34 @@
+#!/bin/bash
+
+function help {
+    echo "Usage: timer NUMBER[SUFFIX]..."
+    echo
+    echo "where NUMBER[SUFFIX]... determines the time until"
+    echo "the timer goes off. The formatting is inherited"
+    echo "from the \"sleep\" command. \"sleep --help\" and"
+    echo "\"man sleep\" are your friends."
+    echo
+    echo "The timer currently goes off by toggling the music"
+    echo "player, so music will either start or stop playing"
+    echo "depending on whether it's already playing at that"
+    echo "time."
+    echo "I'll soon add a visual signal, too."
+    echo
+    echo "Nontrivial dependencies: mpd, mpc"
+}
+
+function error {
+    help
+    exit 1
+}
+
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    help
+    exit 0
+fi
+
+(
+    sleep $@ 2>/dev/null || error
+    mpc -q toggle
+    echo " Go do the thing."
+) &

@@ -14,8 +14,18 @@ if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "be printed. This may be more output than you"
     echo "expect."
     echo
+    echo "Wikipedia resolves ambiguities by adding a context"
+    echo "term in parentheses, e.g. \"Blur (band)\" and"
+    echo "\"Blur (comics)\" to distinguish between meanings"
+    echo "of \"Blur\". You can use this pattern in your"
+    echo "search terms provided that you escape the brackets,"
+    echo "e.g."
+    echo "      wiki Blur \"(band)\""
+    echo "or    wiki Blur \\(band\\)"
+    echo "It might be worth making this more convenient..."
+    echo
     echo "If the moarwiki script is also installed, you can"
-    echo "then enter \"moar!!\" to view the whole article."
+    echo "then enter \"moar!!\" to view the whole page."
     echo
     echo "Nontrivial dependencies: curl, w3m, xmlstarlet"
     echo
@@ -25,9 +35,9 @@ if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     exit 0
 fi
 
-QUERY=$(IFS=+; echo "$*")
+QUERY=$( IFS=+; echo "$*" )
 
-LOCATIONLINE=($(curl -vsS https://en.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r'))
+LOCATIONLINE=($( curl -vsS https://en.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r' ))
 
 if [ -z $LOCATIONLINE ]; then
     echo No results.
@@ -38,13 +48,15 @@ URL="${LOCATIONLINE[2]}"
 
 CONTENTDIV=$( curl -sS "$URL" | xmlstarlet sel -t -c "//div[@id='mw-content-text']" )
 
-FIRSTPARAGRAPHS=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][position()<3]" )
+FIRSTPARAGRAPHS=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][position() < 3]" )
 
 echo
 
 if [[ $FIRSTPARAGRAPHS = *"may refer to:</p>" ]] || [[ $FIRSTPARAGRAPHS = *"may also refer to:</p>" ]]; then
     LIST=$( echo $CONTENTDIV | xmlstarlet sel -t -c "//*[@id!='toctitle']/h2|//*[@id!='toc']/ul" )
-    echo $FIRSTPARAGRAPHS $LIST | w3m -T text/html | cat
+    OUTPUT="$FIRSTPARAGRAPHS $LIST"
 else
-    echo $FIRSTPARAGRAPHS | w3m -T text/html | cat
+    OUTPUT=$FIRSTPARAGRAPHS
 fi
+
+echo $OUTPUT | w3m -T text/html | cat

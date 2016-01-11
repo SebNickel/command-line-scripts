@@ -6,7 +6,7 @@ if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "Or \"moar!!\" immediately after using \"wiki\"."
     echo
     echo "If your search terms are matched to a Wikipedia"
-    echo "article by Wikipedia's search engine, that article"
+    echo "page by Wikipedia's search engine, that page"
     echo "will be displayed in the command-line web browser"
     echo "w3m. (Hit \"q\" to exit w3m.)"
     echo
