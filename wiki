@@ -38,15 +38,13 @@ URL="${LOCATIONLINE[2]}"
 
 CONTENTDIV=$( curl -sS "$URL" | xmlstarlet sel -t -c "//div[@id='mw-content-text']" )
 
-FIRSTPARAGRAPH=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][1]" )
+FIRSTPARAGRAPHS=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][position()<3]" )
 
 echo
 
-if [[ $FIRSTPARAGRAPH = *"may refer to:</p>" ]]; then
+if [[ $FIRSTPARAGRAPHS = *"may refer to:</p>" ]] || [[ $FIRSTPARAGRAPHS = *"may also refer to:</p>" ]]; then
     LIST=$( echo $CONTENTDIV | xmlstarlet sel -t -c "//*[@id!='toctitle']/h2|//*[@id!='toc']/ul" )
-  
-    echo $FIRSTPARAGRAPH $LIST | w3m -T text/html | cat
+    echo $FIRSTPARAGRAPHS $LIST | w3m -T text/html | cat
 else
-    SECONDPARAGRAPH=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][2]" )
-    echo $FIRSTPARAGRAPH $SECONDPARAGRAPH | w3m -T text/html | cat
+    echo $FIRSTPARAGRAPHS | w3m -T text/html | cat
 fi
