@@ -8,11 +8,6 @@ function help {
     echo "from the \"sleep\" command. \"sleep --help\" and"
     echo "\"man sleep\" are your friends."
     echo
-    echo "The timer currently goes off by toggling the music"
-    echo "player, so music will either start or stop playing"
-    echo "depending on whether it's already playing at that"
-    echo "time."
-    echo
     echo "Nontrivial dependencies:"
     echo "      slideshow [local], bspwm, mpd, mpc, urxvt"
 }
