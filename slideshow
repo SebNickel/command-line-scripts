@@ -1,0 +1,19 @@
+#!/bin/bash
+
+ADMONITION=
+
+while true; do
+    for i in $( ls ~/Pictures/ascii | sort -R ); do
+        if [ ${#ADMONITION} -lt 16 ]; then
+            ADMONITION=" Go do the thing."
+        elif [ ${#ADMONITION} -gt 500000 ]; then
+            ADMONITION="No srsly."
+        else
+            ADMONITION="  $ADMONITION  $ADMONITION "
+        fi
+        echo "$ADMONITION"
+        sleep 1
+        cat ~/Pictures/ascii/$i
+        sleep 1
+    done
+done

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+OUTPUT=$(
+    echo "mpc -q toggle && urxvt -hold -e bash -c \"bspc window -t fullscreen && slideshow\"" | at $@ 2>&1
+)
+
+TIME=$(echo $OUTPUT | grep --color=never -o at.* | cut -d " " -f2-)
+
+echo "Alarm set for $TIME"

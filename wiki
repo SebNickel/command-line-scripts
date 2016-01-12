@@ -50,8 +50,6 @@ CONTENTDIV=$( curl -sS "$URL" | xmlstarlet sel -t -c "//div[@id='mw-content-text
 
 FIRSTPARAGRAPHS=$( echo $CONTENTDIV | xmlstarlet sel -t -c "/div/p[node()][position() < 3]" )
 
-echo
-
 if [[ $FIRSTPARAGRAPHS = *"may refer to:</p>" ]] || [[ $FIRSTPARAGRAPHS = *"may also refer to:</p>" ]]; then
     LIST=$( echo $CONTENTDIV | xmlstarlet sel -t -c "//*[@id!='toctitle']/h2|//*[@id!='toc']/ul" )
     OUTPUT="$FIRSTPARAGRAPHS $LIST"
@@ -59,4 +57,5 @@ else
     OUTPUT=$FIRSTPARAGRAPHS
 fi
 
+echo
 echo $OUTPUT | w3m -T text/html | cat

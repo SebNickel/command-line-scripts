@@ -12,9 +12,9 @@ function help {
     echo "player, so music will either start or stop playing"
     echo "depending on whether it's already playing at that"
     echo "time."
-    echo "I'll soon add a visual signal, too."
     echo
-    echo "Nontrivial dependencies: mpd, mpc"
+    echo "Nontrivial dependencies:"
+    echo "      slideshow [local], bspwm, mpd, mpc, urxvt"
 }
 
 function error {
@@ -30,5 +30,6 @@ fi
 (
     sleep $@ 2>/dev/null || error
     mpc -q toggle
-    echo " Go do the thing."
+    urxvt -hold -e bash -c "bspc window -t fullscreen && slideshow" &&
+    echo "Have you done the thing?"
 ) &
