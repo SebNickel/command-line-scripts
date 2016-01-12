@@ -22,9 +22,17 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     exit 0
 fi
 
+if [ "$1" = "-m" ]; then
+    MESSAGE="$2"
+    shift
+    shift
+else
+    MESSAGE=
+fi
+
 (
     sleep $@ 2>/dev/null || error
     mpc -q toggle
-    urxvt -hold -e bash -c "bspc window -t fullscreen && slideshow" &&
+    urxvt -hold -e bash -c "bspc window -t fullscreen && slideshow $MESSAGE" &&
     echo "Have you done the thing?"
 ) &

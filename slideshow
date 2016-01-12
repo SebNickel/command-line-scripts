@@ -1,12 +1,18 @@
 #!/bin/bash
 
+if [ $# = 0 ]; then
+    MESSAGE="Go do the thing."
+else
+    MESSAGE="$@"
+fi
+
 ADMONITION=
 
 while true; do
     for i in $( ls ~/Pictures/ascii | sort -R ); do
-        if [ ${#ADMONITION} -lt 16 ]; then
-            ADMONITION=" Go do the thing."
-        elif [ ${#ADMONITION} -gt 500000 ]; then
+        if [ -z "$ADMONITION" ] || [ "$ADMONITION" = "No srsly." ]; then
+            ADMONITION=" $MESSAGE"
+        elif [ ${#ADMONITION} -gt 10000000 ]; then
             ADMONITION="No srsly."
         else
             ADMONITION="  $ADMONITION  $ADMONITION "

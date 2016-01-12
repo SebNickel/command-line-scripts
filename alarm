@@ -1,7 +1,15 @@
 #!/bin/bash
 
+if [ "$1" = "-m" ]; then
+    MESSAGE="$2"
+    shift
+    shift
+else
+    MESSAGE=
+fi
+
 OUTPUT=$(
-    echo "mpc -q toggle && urxvt -hold -e bash -c \"bspc window -t fullscreen && slideshow\"" | at $@ 2>&1
+    echo "mpc -q toggle && urxvt -hold -e bash -c \"bspc window -t fullscreen && slideshow $MESSAGE\"" | at $@ 2>&1
 )
 
 TIME=$(echo $OUTPUT | grep --color=never -o at.* | cut -d " " -f2-)
