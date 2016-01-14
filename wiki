@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO: One case in which it doesn't work right is "wiki gimlet". Figure out why, fix.
+
 if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo
     echo "Usage: wiki <search terms>"
