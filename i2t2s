@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Working title "i2t2s" for "img2txt to scale". Meh.
+#
+
+# Todo: Check that there's at least one arg, the path of the img file.
+# Todo: Allow adding a message to be printed under the image, in which case the height should be
+#       reduced by as many lines as needed for the message.
+# Todo: Allow the user to specify a maximum height lower than the height of the terminal.
+
+AVAILABLE_LINES=$(($( tput lines ) - 1))
+AVAILABLE_COLUMNS=$( tput cols )
+
+IMG_DIMENSIONS=($( feh -L "%h %w" $1 ))
+
+IMG_HEIGHT=${IMG_DIMENSIONS[0]}
+IMG_WIDTH=${IMG_DIMENSIONS[1]}
+
+if [ "$IMG_WIDTH" -lt "$IMG_HEIGHT" ]; then
+    img2txt $1 -H $AVAILABLE_LINES
+    exit 0
+fi
+
+img2txt $1 -W $AVAILABLE_COLUMNS
