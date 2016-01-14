@@ -1,0 +1,129 @@
+#!/bin/bash
+
+STACK_ROOT=~/.stackfiles
+STACK_FILE=stack
+STACK_FULLPATH=$STACK_ROOT/$STACK_FILE
+
+while true; do
+    case $1 in
+        -h|--help)
+            echo
+            echo "Usage: stack <text> | stack <option>"
+            echo
+            echo "Quickly add a new line to"
+            echo
+            echo "  $STACK_FULLPATH,"
+            echo
+            echo "for To-Do-list-like purposes."
+            echo
+            echo "You should get an error if there is no"
+            echo "\"Documents\" folder in your \$HOME directory,"
+            echo "or I might mess things up in the unlikely"
+            echo "event that you already have a file under that"
+            echo "name and location wot assigned some other"
+            echo "purpose!"
+            echo
+            echo "Available options:"
+            echo
+            column -s "%" -o "    " -t <<HERE
+        -c%Clear your stackfile. (Requires confirmation.)
+    %
+        -f FILE%Enter this option *first*.
+        %The file used by default is $STACK_FULLPATH,
+        %but you can specify any other file in the $( basename $STACK_ROOT )
+        %directory by passing its name to the -f option.
+        %Very soon you'll also be able to work with files in
+        %subdirectories of $( basename $STACK_ROOT )
+        %as a first step toward a workflowy-like nesting
+        %structure.
+        %NOTE: Aliases are your friends. E.g. if you often
+        %use a number of different stackfiles, e.g. a \"next\"
+        %file, a \"waiting for\" file, a \"calendar\" file,
+        %your might like to add \"alias next='stack -f next'\"
+        %and company to your .bashrc.
+        -h|--help%Print this text and exit.
+    %
+        -l%Print the contents of your stackfile.
+    %
+        -s%Print the contents of your stackfile with line
+        %numbers, then prompt you for arguments to pass
+        %to sed. The resulting sed command is then
+        %applied to your stackfile, which is then
+        %overwritten by the output! Consult "man sed"
+        %and the web to learn about sed. Most
+        %importantly perhaps, entering "stack -s" and
+        %then "4d" will delete the fourth line in the stack.
+         %(Can you guess how to delete the third line?).
+    %
+        -t%Print the contents of your stackfile from newest
+        %to oldest.
+HERE
+            echo
+            echo "Absent any of these options at first position,"
+            echo "any text you write after \"stack \" will be "
+            echo "appended to your stackfile."
+            echo
+            exit 0
+            ;;
+        -c)
+            PROMPT="Clear $STACK_FILE? [y/n] "
+            while true; do
+                read -p "$PROMPT" -n 1 ANSWER
+                echo
+                if [ "$ANSWER" = "y" ]; then
+                    rm $STACK_FULLPATH
+                    touch $STACK_FULLPATH
+                    echo "All clear."
+                    break
+                elif [ "$ANSWER" = "n" ]; then
+                    echo "$STACK_FILE left untouched."
+                    break
+                else
+                    PROMPT="Clear $STACK_FILE? --> [y/n] <-- "
+                fi
+            done
+            exit 0
+            ;;
+        -f)
+            STACK_PATH=$( echo $2 | sed 's/\./\_\/_/g' )
+            STACK_DIR=$( dirname $STACK_PATH )
+            STACK_FILE=$( basename $STACK_PATH )
+            STACK_FULLPATH=$STACK_ROOT/$STACK_DIR/$STACK_FILE
+
+            # This is permissive. I could first check $3 to see if the user is actually trying
+            # to create a new file before I create new directories.
+
+            if [ ! -d $STACK_ROOT/$STACK_DIR ]; then
+                mkdir -p $STACK_ROOT/$STACK_DIR
+                echo "Created $STACK_ROOT/$STACK_DIR"
+            fi
+            shift
+            shift
+            ;;
+        -l)
+            cat -n $STACK_FULLPATH
+            exit 0
+            ;;
+        --pleh)
+            echo "\"--pleh\" is \"--help\" written backwards so that helicopters can read it from the sky.:wq"
+            exit 0
+            ;;
+        -s)
+            cat -n $STACK_FULLPATH
+            read -p "sed " COMMANDS
+            echo Commands: $COMMANDS
+            echo Whole thing: sed $COMMANDS $STACK_FULLPATH
+            echo "$( sed "$COMMANDS" $STACK_FULLPATH )" > $STACK_FULLPATH
+            exit 0
+            ;;     
+        -t)
+            tac $STACK_FULLPATH
+            exit 0
+            ;;
+        *)
+            echo -e $@ >> $STACK_FULLPATH
+            echo "Stacked."
+            exit 0
+            ;;
+    esac
+done
