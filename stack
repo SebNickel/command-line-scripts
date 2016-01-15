@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DEFAULT_PATH=~/.stackfiles/stack
+
 STACK_ROOT=~/.stackfiles
 STACK_FILE=stack
 STACK_FULLPATH=$STACK_ROOT/$STACK_FILE
@@ -28,19 +30,34 @@ while true; do
             column -s "%" -o "    " -t <<HERE
         -c%Clear your stackfile. (Requires confirmation.)
     %
-        -f FILE%Enter this option *first*.
+        -f [NODE]... FILE :%Enter this option *first*.
+    %
         %The file used by default is $STACK_FULLPATH,
-        %but you can specify any other file in the $( basename $STACK_ROOT )
-        %directory by passing its name to the -f option.
-        %Very soon you'll also be able to work with files in
-        %subdirectories of $( basename $STACK_ROOT )
-        %as a first step toward a workflowy-like nesting
-        %structure.
-        %NOTE: Aliases are your friends. E.g. if you often
-        %use a number of different stackfiles, e.g. a \"next\"
-        %file, a \"waiting for\" file, a \"calendar\" file,
-        %your might like to add \"alias next='stack -f next'\"
-        %and company to your .bashrc.
+        %but you can specify any other file in $( basename $STACK_ROOT )'s
+        %subdirectory structure by passing its name and path
+        %to the -f option.
+        %The idea is to provide Workflowy-like nesting.
+    %
+        %The "nodes" correspond to the actual directory
+        %structure inside the $( basename $STACK_ROOT ) directory, but
+        %the syntax here replaces "+"s and "/"s with whitespace.
+        %(The "+"s are added automatically and you're supposed to
+        %ignore them.)
+        %E.g.
+        %
+        %    stack -f next errands shopping_centre : "La la la"        
+        %
+        %writes "La la la" to the file
+        %
+        %    $STACK_ROOT/next+/+errands+/+shopping_centre
+        %
+        %NOTE: Aliases are your friends. If you often use a
+        %number of different stackfiles, e.g. a "next" file
+        %file, a "waiting_for" file, a "calendar" file, you
+        %might like to add "alias next='stack -f next'" and
+        %company to your .bashrc. (Without the colon, so that
+        %you can append further nodes.)
+    %
         -h|--help%Print this text and exit.
     %
         -l%Print the contents of your stackfile.
@@ -85,7 +102,24 @@ HERE
             exit 0
             ;;
         -f)
-            STACK_PATH=$( echo $2 | sed 's/\./\_\/_/g' )
+            STACK_PATH=
+            while true; do
+                shift
+                if [ -z "$1" ]; then
+                    echo "Error: Missing colon."
+                    echo "Proper syntax is \"stack -f FOLDER... FILE : [TEXT]...\""
+                    exit 1
+                elif [ "$1" = ':' ]; then
+                    break
+                else
+                    if [ -z "$STACK_PATH" ]; then
+                        STACK_PATH="$1"
+                    else
+                        STACK_PATH="$STACK_PATH+/+$1"
+                    fi
+                fi
+            done
+            shift
             STACK_DIR=$( dirname $STACK_PATH )
             STACK_FILE=$( basename $STACK_PATH )
             STACK_FULLPATH=$STACK_ROOT/$STACK_DIR/$STACK_FILE
@@ -97,13 +131,27 @@ HERE
                 mkdir -p $STACK_ROOT/$STACK_DIR
                 echo "Created $STACK_ROOT/$STACK_DIR"
             fi
-            shift
-            shift
             ;;
         -l)
             cat -n $STACK_FULLPATH
             exit 0
             ;;
+        -ls)
+            if [ "$STACK_FULLPATH" = "$DEFAULT_PATH" ]; then
+                NODE_PATH="$STACK_ROOT"
+            else
+                NODE_PATH="$STACK_FULLPATH"
+            fi
+            for i in $( ls $NODE_PATH ); do
+                echo
+                echo $i
+                if [ -f $i ]; then
+                    echo
+                    cat -n $i
+                fi
+            done
+            exit 0
+            ;; 
         --pleh)
             echo "\"--pleh\" is \"--help\" written backwards so that helicopters can read it from the sky.:wq"
             exit 0
@@ -111,8 +159,6 @@ HERE
         -s)
             cat -n $STACK_FULLPATH
             read -p "sed " COMMANDS
-            echo Commands: $COMMANDS
-            echo Whole thing: sed $COMMANDS $STACK_FULLPATH
             echo "$( sed "$COMMANDS" $STACK_FULLPATH )" > $STACK_FULLPATH
             exit 0
             ;;     
