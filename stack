@@ -1,10 +1,24 @@
 #!/bin/bash
 
-DEFAULT_PATH=~/.stackfiles/stack
-
 STACK_ROOT=~/.stackfiles
 STACK_FILE=stack
-STACK_FULLPATH=$STACK_ROOT/$STACK_FILE
+STACK_DIR="$STACK_ROOT"
+STACK_FULLPATH="$STACK_ROOT/$STACK_FILE"
+
+DEFAULT_PATH="$STACK_FULLPATH"
+
+function ls_R {
+
+    for i in "$@"; do
+        if [ -d $i ]; then
+            echo "+ $( basename $i )"
+            ls_R $i/*
+        elif [ -f $i ]; then
+            cat -n $i
+        fi
+    done
+
+}
 
 while true; do
     case $1 in
@@ -102,26 +116,25 @@ HERE
             exit 0
             ;;
         -f)
-            STACK_PATH=
+            STACK_DIR=
             while true; do
                 shift
                 if [ -z "$1" ]; then
                     echo "Error: Missing colon."
-                    echo "Proper syntax is \"stack -f FOLDER... FILE : [TEXT]...\""
+                    echo "Proper syntax is \"stack -f FOLDER... FILE : [TEXT]...|OPTION\""
                     exit 1
                 elif [ "$1" = ':' ]; then
                     break
                 else
-                    if [ -z "$STACK_PATH" ]; then
-                        STACK_PATH="$1"
+                    if [ -z "$STACK_DIR" ]; then
+                        STACK_DIR="$1"
                     else
-                        STACK_PATH="$STACK_PATH+/+$1"
+                        STACK_DIR="$STACK_DIR/$1"
                     fi
                 fi
             done
             shift
-            STACK_DIR=$( dirname $STACK_PATH )
-            STACK_FILE=$( basename $STACK_PATH )
+            STACK_FILE=$( basename $STACK_DIR )
             STACK_FULLPATH=$STACK_ROOT/$STACK_DIR/$STACK_FILE
 
             # This is permissive. I could first check $3 to see if the user is actually trying
@@ -142,14 +155,7 @@ HERE
             else
                 NODE_PATH="$STACK_FULLPATH"
             fi
-            for i in $( ls $NODE_PATH ); do
-                echo
-                echo $i
-                if [ -f $i ]; then
-                    echo
-                    cat -n $i
-                fi
-            done
+            ls_R $NODE_PATH/*
             exit 0
             ;; 
         --pleh)
