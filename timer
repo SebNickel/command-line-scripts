@@ -36,3 +36,8 @@ fi
     urxvt -hold -e bash -c "bspc window -t fullscreen && slideshow $MESSAGE" &&
     echo "Have you done the thing?"
 ) &
+
+RELATIVE_TIME=$( echo $@ | sed 's/h/\ hour/;s/m/\ min/;s/s/\ sec/' )
+ABSOLUTE_TIME=$( date -d "$RELATIVE_TIME" )
+
+echo "Timer set for $ABSOLUTE_TIME."
