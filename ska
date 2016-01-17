@@ -1,17 +1,14 @@
 #!/bin/bash
-#
-# Working title "i2t2s" for "img2txt to scale". Meh.
-#
 
 # Todo: Check that there's at least one arg, the path of the img file.
 # Todo: Allow adding a message to be printed under the image, in which case the height should be
 #       reduced by as many lines as needed for the message.
 # Todo: Allow the user to specify a maximum height lower than the height of the terminal.
 
-AVAILABLE_LINES=$(($( tput lines ) - 1))
+AVAILABLE_LINES=$(( $( tput lines ) - 1 ))
 AVAILABLE_COLUMNS=$( tput cols )
 
-TTY_ASPECT=$(( $AVAILABLE_COLUMNS - ( 2 * $AVAILABLE_LINES ) ))
+TTY_ASPECT_RATIO=$( echo "$AVAILABLE_COLUMNS / ( 2 * $AVAILABLE_LINES )" | bc -l )
     # Assuming that terminal lines are about twice as high as columns are wide.
 
 IMG_DIMENSIONS=($( feh -L "%h %w" $1 ))
@@ -19,9 +16,11 @@ IMG_DIMENSIONS=($( feh -L "%h %w" $1 ))
 IMG_HEIGHT=${IMG_DIMENSIONS[0]}
 IMG_WIDTH=${IMG_DIMENSIONS[1]}
 
-IMG_ASPECT=$(( $IMG_WIDTH - $IMG_HEIGHT ))
+IMG_ASPECT_RATIO=$( echo "$IMG_WIDTH / $IMG_HEIGHT" | bc -l )
 
-if [ "$IMG_ASPECT" -lt "$TTY_ASPECT" ]; then
+BOOL=$( echo "$IMG_ASPECT_RATIO < $TTY_ASPECT_RATIO" | bc -l )
+
+if [ "$BOOL" -eq 1 ]; then
     img2txt $1 -H $AVAILABLE_LINES
 else
     img2txt $1 -W $AVAILABLE_COLUMNS

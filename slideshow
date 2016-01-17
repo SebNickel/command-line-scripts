@@ -9,7 +9,7 @@ fi
 ADMONITION=
 
 while true; do
-    for i in $( ls ~/Pictures/ascii | sort -R ); do
+    for i in $( ls ~/Pictures/asciiable | sort -R ); do
         if [ -z "$ADMONITION" ] || [ "$ADMONITION" = "No srsly." ]; then
             ADMONITION=" $MESSAGE"
         elif [ ${#ADMONITION} -gt 10000000 ]; then
@@ -19,7 +19,7 @@ while true; do
         fi
         echo "$ADMONITION"
         sleep 1
-        cat ~/Pictures/ascii/$i
+        ska ~/Pictures/asciiable/$i
         sleep 1
     done
 done
