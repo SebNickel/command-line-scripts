@@ -7,16 +7,54 @@ STACK_FULLPATH="$STACK_ROOT/$STACK_FILE"
 
 DEFAULT_PATH="$STACK_FULLPATH"
 
+LIST_DIRS_ONLY=no
+
+EDITOR=vim
+
+shopt -s globstar
+
 function ls_R {
+
+    if [ "$LIST_DIRS_ONLY" = "no" ]; then
+
+        for i in "$@"; do
+            if [ -f $i ]; then
+                cat -n $i
+                echo
+            fi
+        done
+
+    fi
 
     for i in "$@"; do
         if [ -d $i ]; then
-            echo "+ $( basename $i )"
+            echo "$( echo $i | cut -b $(( ${#STACK_ROOT} + 2 ))- )"
+            echo
             ls_R $i/*
-        elif [ -f $i ]; then
-            cat -n $i
+        fi
+    done 
+
+}
+
+function ls_files {
+
+    FILES=
+
+    for i in $STACK_DIR/*; do
+        if [ -f $i ]; then
+            FILES="$FILES $i"
         fi
     done
+
+    SUB_DIR_CONTENTS=($STACK_DIR/**)
+
+    for i in "${SUB_DIR_CONTENTS[@]}"; do
+        if [ -f "$i" ]; then
+            FILES="$FILES $i"
+        fi
+    done
+
+    return 0
 
 }
 
@@ -44,19 +82,23 @@ while true; do
             column -s "%" -o "    " -t <<HERE
         -c%Clear your stackfile. (Requires confirmation.)
     %
+        -e%Open the stackfile in your editor. (Defined in the
+        %EDITOR variable in the header section of the stack
+        %script. Could be moved to a config file perhaps.)
+    %
+        -er%Open the stackfile + all stackfiles in its
+        %subdirectories in your editor, in different buffers.
+        %(Works in vim, probably not in most editors.)
+    %
         -f [NODE]... FILE :%Enter this option *first*.
     %
         %The file used by default is $STACK_FULLPATH,
         %but you can specify any other file in $( basename $STACK_ROOT )'s
         %subdirectory structure by passing its name and path
         %to the -f option.
-        %The idea is to provide Workflowy-like nesting.
     %
         %The "nodes" correspond to the actual directory
-        %structure inside the $( basename $STACK_ROOT ) directory, but
-        %the syntax here replaces "+"s and "/"s with whitespace.
-        %(The "+"s are added automatically and you're supposed to
-        %ignore them.)
+        %structure inside the $( basename $STACK_ROOT ) directory.
         %E.g.
         %
         %    stack -f next errands shopping_centre : "La la la"        
@@ -74,7 +116,16 @@ while true; do
     %
         -h|--help%Print this text and exit.
     %
-        -l%Print the contents of your stackfile.
+        -l%Print the contents of your stackfile, with line
+        %numbers.
+    %
+        -ld%List all dirs and subdirs.
+    %
+        -ls%List all dirs and subdirs as well as the contents
+        %of all stackfiles in a command line pager.
+    %
+        -r%Remove the selected stackfile's parent dir and all
+        %of its contents. (Requires confirmation.)
     %
         -s%Print the contents of your stackfile with line
         %numbers, then prompt you for arguments to pass
@@ -102,8 +153,7 @@ HERE
                 read -p "$PROMPT" -n 1 ANSWER
                 echo
                 if [ "$ANSWER" = "y" ]; then
-                    rm $STACK_FULLPATH
-                    touch $STACK_FULLPATH
+                    echo -n > $STACK_FULLPATH
                     echo "All clear."
                     break
                 elif [ "$ANSWER" = "n" ]; then
@@ -115,8 +165,16 @@ HERE
             done
             exit 0
             ;;
+        -e) 
+            $EDITOR $STACK_FULLPATH
+            exit 0
+            ;;
+        -er)
+            ls_files
+            $EDITOR $FILES
+            exit 0
+            ;;
         -f)
-            STACK_DIR=
             while true; do
                 shift
                 if [ -z "$1" ]; then
@@ -126,8 +184,8 @@ HERE
                 elif [ "$1" = ':' ]; then
                     break
                 else
-                    if [ -z "$STACK_DIR" ]; then
-                        STACK_DIR="$1"
+                    if [ "$STACK_DIR" = "$STACK_ROOT" ]; then
+                        STACK_DIR="$STACK_ROOT/$1"
                     else
                         STACK_DIR="$STACK_DIR/$1"
                     fi
@@ -135,41 +193,63 @@ HERE
             done
             shift
             STACK_FILE=$( basename $STACK_DIR )
-            STACK_FULLPATH=$STACK_ROOT/$STACK_DIR/$STACK_FILE
+            STACK_FULLPATH=$STACK_DIR/$STACK_FILE
 
             # This is permissive. I could first check $3 to see if the user is actually trying
             # to create a new file before I create new directories.
 
-            if [ ! -d $STACK_ROOT/$STACK_DIR ]; then
-                mkdir -p $STACK_ROOT/$STACK_DIR
-                echo "Created $STACK_ROOT/$STACK_DIR"
+            if [ ! -d $STACK_DIR ]; then
+                mkdir -p $STACK_DIR
+                echo "Created $STACK_DIR"
             fi
             ;;
         -l)
             cat -n $STACK_FULLPATH
             exit 0
             ;;
+        -ld)
+            LIST_DIRS_ONLY=yes
+            ls_R $STACK_DIR/*
+            exit 0
+            ;;
         -ls)
-            if [ "$STACK_FULLPATH" = "$DEFAULT_PATH" ]; then
-                NODE_PATH="$STACK_ROOT"
-            else
-                NODE_PATH="$STACK_FULLPATH"
-            fi
-            ls_R $NODE_PATH/*
+            ls_R $STACK_DIR/* | vimpager -c "set nonumber"
             exit 0
             ;; 
         --pleh)
             echo "\"--pleh\" is \"--help\" written backwards so that helicopters can read it from the sky.:wq"
             exit 0
             ;;
-        -s)
+        -r)
+            echo "Up for deletion:"
+            echo
+            echo $STACK_DIR/** | sed 's/\ /\n/g'
+            echo
+            PROMPT="Confirm? [y/n]"
+            while true; do
+                read -p "$PROMPT" -n 1 ANSWER
+                echo
+                if [ "$ANSWER" = "y" ]; then
+                    rm -rf $STACK_DIR
+                    echo "Deleted."
+                    break
+                elif [ "$ANSWER" = "n" ]; then
+                    echo "Nothing deleted."
+                    break
+                else
+                    PROMPT="Confirm? --> [y/n] <--"
+                fi
+            done
+            exit 0
+            ;;
+        -s) # This needs to be way safer :)
             cat -n $STACK_FULLPATH
             read -p "sed " COMMANDS
             echo "$( sed "$COMMANDS" $STACK_FULLPATH )" > $STACK_FULLPATH
             exit 0
             ;;     
         -t)
-            tac $STACK_FULLPATH
+            tac $STACK_FULLPATH | cat -n
             exit 0
             ;;
         *)

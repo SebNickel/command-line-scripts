@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#
+# Quickly add new events to pal
+#
+
+PAL_DIR=~/.pal
+PAL_EXTENSION=.pal
+
+PAL_FILE=seb
+
+while true; do
+    case $1 in
+        -p)
+            PAL_FILE="$2"
+            shift
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+PAL_PATH=$PAL_DIR/$PAL_FILE$PAL_EXTENSION
+
+echo $@ >> $PAL_PATH
