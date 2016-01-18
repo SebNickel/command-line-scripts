@@ -1,261 +1,250 @@
 #!/bin/bash
 
-STACK_ROOT=~/.stackfiles
-STACK_FILE=stack
-STACK_DIR="$STACK_ROOT"
-STACK_FULLPATH="$STACK_ROOT/$STACK_FILE"
-
-DEFAULT_PATH="$STACK_FULLPATH"
-
-LIST_DIRS_ONLY=no
-
-EDITOR=vim
+# Quickly take, organise, and edit notes from the command line.
 
 shopt -s globstar
 
-function ls_R {
+STACK_ROOT=~/.stackfiles
+EDITOR=vim
+# TODO: There should be a PAGER constant here. However, I want to set it to
+#       "vimpager -c \"set nonumber\"", and I have not yet found a way to
+#       pipe output to this constant without triggering a confusing error.
+#       (No problems if PAGER is set to something simpler like just "vimpager"
+#       or "less").
 
-    if [ "$LIST_DIRS_ONLY" = "no" ]; then
+err() {
+    echo "[$(date + '%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+}
 
-        for i in "$@"; do
-            if [ -f $i ]; then
-                cat -n $i
-                echo
-            fi
-        done
+usage() {
+#   TODO
+    echo "Usage info coming soon."
 
-    fi
+}
+
+list_dirs() {
 
     for i in "$@"; do
         if [ -d $i ]; then
             echo "$( echo $i | cut -b $(( ${#STACK_ROOT} + 2 ))- )"
-            echo
-            ls_R $i/*
+            list_dirs $i/*
         fi
     done 
 
 }
 
-function ls_files {
+print_all() {
 
-    FILES=
-
-    for i in $STACK_DIR/*; do
+    for i in "$@"; do
         if [ -f $i ]; then
-            FILES="$FILES $i"
+            cat -n $i
+            echo
         fi
     done
 
-    SUB_DIR_CONTENTS=($STACK_DIR/**)
-
-    for i in "${SUB_DIR_CONTENTS[@]}"; do
-        if [ -f "$i" ]; then
-            FILES="$FILES $i"
+    for i in "$@"; do
+        if [ -d $i ]; then
+            echo "$( echo $i | cut -b $(( ${#STACK_ROOT} + 2 ))- )"
+            echo
+            print_all $i/*
         fi
-    done
-
-    return 0
+    done 
 
 }
 
-while true; do
-    case $1 in
-        -h|--help)
-            echo
-            echo "Usage: stack <text> | stack <option>"
-            echo
-            echo "Quickly add a new line to"
-            echo
-            echo "  $STACK_FULLPATH,"
-            echo
-            echo "for To-Do-list-like purposes."
-            echo
-            echo "You should get an error if there is no"
-            echo "\"Documents\" folder in your \$HOME directory,"
-            echo "or I might mess things up in the unlikely"
-            echo "event that you already have a file under that"
-            echo "name and location wot assigned some other"
-            echo "purpose!"
-            echo
-            echo "Available options:"
-            echo
-            column -s "%" -o "    " -t <<HERE
-        -c%Clear your stackfile. (Requires confirmation.)
-    %
-        -e%Open the stackfile in your editor. (Defined in the
-        %EDITOR variable in the header section of the stack
-        %script. Could be moved to a config file perhaps.)
-    %
-        -er%Open the stackfile + all stackfiles in its
-        %subdirectories in your editor, in different buffers.
-        %(Works in vim, probably not in most editors.)
-    %
-        -f [NODE]... FILE :%Enter this option *first*.
-    %
-        %The file used by default is $STACK_FULLPATH,
-        %but you can specify any other file in $( basename $STACK_ROOT )'s
-        %subdirectory structure by passing its name and path
-        %to the -f option.
-    %
-        %The "nodes" correspond to the actual directory
-        %structure inside the $( basename $STACK_ROOT ) directory.
-        %E.g.
-        %
-        %    stack -f next errands shopping_centre : "La la la"        
-        %
-        %writes "La la la" to the file
-        %
-        %    $STACK_ROOT/next+/+errands+/+shopping_centre
-        %
-        %NOTE: Aliases are your friends. If you often use a
-        %number of different stackfiles, e.g. a "next" file
-        %file, a "waiting_for" file, a "calendar" file, you
-        %might like to add "alias next='stack -f next'" and
-        %company to your .bashrc. (Without the colon, so that
-        %you can append further nodes.)
-    %
-        -h|--help%Print this text and exit.
-    %
-        -l%Print the contents of your stackfile, with line
-        %numbers.
-    %
-        -ld%List all dirs and subdirs.
-    %
-        -ls%List all dirs and subdirs as well as the contents
-        %of all stackfiles in a command line pager.
-    %
-        -r%Remove the selected stackfile's parent dir and all
-        %of its contents. (Requires confirmation.)
-    %
-        -s%Print the contents of your stackfile with line
-        %numbers, then prompt you for arguments to pass
-        %to sed. The resulting sed command is then
-        %applied to your stackfile, which is then
-        %overwritten by the output! Consult "man sed"
-        %and the web to learn about sed. Most
-        %importantly perhaps, entering "stack -s" and
-        %then "4d" will delete the fourth line in the stack.
-         %(Can you guess how to delete the third line?).
-    %
-        -t%Print the contents of your stackfile from newest
-        %to oldest.
-HERE
-            echo
-            echo "Absent any of these options at first position,"
-            echo "any text you write after \"stack \" will be "
-            echo "appended to your stackfile."
-            echo
-            exit 0
-            ;;
-        -c)
-            PROMPT="Clear $STACK_FILE? [y/n] "
-            while true; do
-                read -p "$PROMPT" -n 1 ANSWER
+list_files() {
+
+    local stack_dir="$1"
+
+    local sub_dir_contents
+    sub_dir_contents=("$stack_dir/**")
+
+    local files
+    files=""
+
+    for i in $stack_dir/*; do
+        if [ -f $i ]; then
+            files="$files $i"
+        fi
+    done
+
+    for i in $sub_dir_contents; do
+        if [ -f "$i" ]; then
+            files="$files $i"
+        fi
+    done
+
+    echo "$files"
+
+}
+
+clear_stack_file() {
+
+    local stack_full_path
+    stack_full_path="$1"
+
+    local stack_file
+    stack_file="$( basename $stack_full_path )"
+
+    local prompt
+    prompt="Clear $stack_file? [y/n]"
+    
+    while true; do
+        read -p "$prompt" -n 1 answer
+        echo
+        if [ "$answer" = "y" ]; then
+            echo -n > $stack_full_path
+            echo "All clear."
+            break
+        elif [ "$answer" = "n" ]; then
+            echo "$stack_file Left untouched."
+            break
+        else
+            prompt="Clear $stack_file? --> [y/n] <-- "
+        fi
+    done
+
+}
+
+remove_node() {
+
+    local stack_dir="$1"
+
+    echo "Up for deletion:"
+    echo
+    echo $stack_dir/** | sed 's/\ /\n/g'
+    echo
+
+    local prompt
+    prompt="Confirm? [y/n]"
+
+    local answer
+
+    while true; do
+        read -p "$prompt" -n 1 answer
+        echo
+        if [ "$answer" = "y" ]; then
+            rm -rf $stack_dir
+            echo "Deleted."
+            break
+        elif [ "$answer" = "n" ]; then
+            echo "Nothing deleted."
+            break
+        else
+            prompt="Confirm? --> [y/n] <-- "
+        fi
+    done
+
+}
+
+sed_edit() {
+
+    local stack_full_path="$1"
+
+    echo
+    cat -n $stack_full_path
+    echo
+
+    local commands
+    read -p "sed " commands
+
+    echo
+    echo "Command: sed $commands $stack_full_path"
+
+    while true; do
+        local answer
+        echo
+        printf "\ta) Abort.\n"
+        printf "\tv) View result without saving, then return to this prompt.\n"
+        printf "\tw) Overwrite the file with the result of this command.\n"
+        echo
+        read -p "[a/v/w]? " -n 1 answer
+        echo
+        case $answer in
+            a)
                 echo
-                if [ "$ANSWER" = "y" ]; then
-                    echo -n > $STACK_FULLPATH
-                    echo "All clear."
-                    break
-                elif [ "$ANSWER" = "n" ]; then
-                    echo "$STACK_FILE left untouched."
-                    break
-                else
-                    PROMPT="Clear $STACK_FILE? --> [y/n] <-- "
-                fi
-            done
-            exit 0
-            ;;
-        -e) 
-            $EDITOR $STACK_FULLPATH
-            exit 0
-            ;;
-        -er)
-            ls_files
-            $EDITOR $FILES
-            exit 0
-            ;;
-        -f)
-            while true; do
-                shift
-                if [ -z "$1" ]; then
-                    echo "Error: Missing colon."
-                    echo "Proper syntax is \"stack -f FOLDER... FILE : [TEXT]...|OPTION\""
-                    exit 1
-                elif [ "$1" = ':' ]; then
-                    break
-                else
-                    if [ "$STACK_DIR" = "$STACK_ROOT" ]; then
-                        STACK_DIR="$STACK_ROOT/$1"
-                    else
-                        STACK_DIR="$STACK_DIR/$1"
-                    fi
-                fi
-            done
+                echo "Aborting."
+                break
+                ;;
+            v)
+                echo
+                sed $commands $stack_full_path | cat -n
+                ;;
+            w)
+                echo "$( sed "$commands" $stack_full_path )" > $stack_full_path
+                echo
+                echo "Overwritten."
+                break
+                ;;
+            *)
+                echo
+                echo "Invalid selection."
+                ;;
+        esac
+    done
+
+}
+
+main() {
+
+    local stack_dir
+    stack_dir="$STACK_ROOT"
+
+    local stack_file
+    stack_file="stack"
+
+    if [ "$1" = "-f" ]; then
+
+        stack_file=""
+        while true; do
             shift
-            STACK_FILE=$( basename $STACK_DIR )
-            STACK_FULLPATH=$STACK_DIR/$STACK_FILE
-
-            # This is permissive. I could first check $3 to see if the user is actually trying
-            # to create a new file before I create new directories.
-
-            if [ ! -d $STACK_DIR ]; then
-                mkdir -p $STACK_DIR
-                echo "Created $STACK_DIR"
+            if [[ "$1" =~ ^- ]] || [ "$1" = ":" ] || [ -z "$1" ]; then
+                break
+            else
+               stack_dir="${stack_dir}/$1"
             fi
-            ;;
-        -l)
-            cat -n $STACK_FULLPATH
-            exit 0
-            ;;
-        -ld)
-            LIST_DIRS_ONLY=yes
-            ls_R $STACK_DIR/*
-            exit 0
-            ;;
-        -ls)
-            ls_R $STACK_DIR/* | vimpager -c "set nonumber"
-            exit 0
-            ;; 
-        --pleh)
-            echo "\"--pleh\" is \"--help\" written backwards so that helicopters can read it from the sky.:wq"
-            exit 0
-            ;;
-        -r)
-            echo "Up for deletion:"
-            echo
-            echo $STACK_DIR/** | sed 's/\ /\n/g'
-            echo
-            PROMPT="Confirm? [y/n]"
-            while true; do
-                read -p "$PROMPT" -n 1 ANSWER
-                echo
-                if [ "$ANSWER" = "y" ]; then
-                    rm -rf $STACK_DIR
-                    echo "Deleted."
-                    break
-                elif [ "$ANSWER" = "n" ]; then
-                    echo "Nothing deleted."
-                    break
-                else
-                    PROMPT="Confirm? --> [y/n] <--"
-                fi
-            done
-            exit 0
-            ;;
-        -s) # This needs to be way safer :)
-            cat -n $STACK_FULLPATH
-            read -p "sed " COMMANDS
-            echo "$( sed "$COMMANDS" $STACK_FULLPATH )" > $STACK_FULLPATH
-            exit 0
-            ;;     
-        -t)
-            tac $STACK_FULLPATH | cat -n
-            exit 0
-            ;;
+        done
+
+        stack_file=$( basename $stack_dir )
+
+        if [ "$1" = ":" ]; then
+            if [ ! -d $stack_dir ]; then
+                mkdir -p $stack_dir
+                echo "Created ${stack_dir}."
+            fi
+            shift
+        fi 
+
+    fi
+
+    local stack_fullpath
+    stack_full_path="${stack_dir}/${stack_file}"
+
+    if [ "$#" -eq 0 ]; then
+        cat -n $stack_full_path
+        exit 0
+    fi
+
+    getopts cdeEhlrst opt
+
+    case $opt in
+        c) clear_stack_file $stack_full_path ;;
+        d) list_dirs ${stack_dir}/* ;;
+        e) $EDITOR $stack_full_path ;;
+        E) $EDITOR $( list_files $stack_dir ) ;;
+        h) usage ;;
+        l) print_all "$stack_dir" | vimpager -c "set nonumber" ;;
+        r) remove_node $stack_dir ;;
+        s) sed_edit $stack_full_path ;;
+        t) tac $stack_full_path | cat -n ;;
         *)
-            echo -e $@ >> $STACK_FULLPATH
+            echo "$@" >> $stack_full_path
             echo "Stacked."
-            exit 0
             ;;
     esac
-done
+
+    exit 0
+
+}
+
+main "$@"
