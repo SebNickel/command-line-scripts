@@ -13,7 +13,7 @@ EDITOR=vim
 #       or "less").
 
 err() {
-    echo "[$(date + '%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+    echo "$( basename $0 ): $@" >&2
 }
 
 usage() {
@@ -225,7 +225,12 @@ main() {
         exit 0
     fi
 
-    getopts cdeEhlrst opt
+    if [ "$1" = "--help" ]; then
+        usage
+        exit 0
+    fi
+
+    getopts :cdeEhlrst opt
 
     case $opt in
         c) clear_stack_file $stack_full_path ;;

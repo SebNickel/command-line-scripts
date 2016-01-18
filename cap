@@ -1,9 +1,0 @@
-#!/bin/bash
-
-# To make the "moar!!" thing work just like for "wiki" and "moarwiki",
-# add "alias moarcap=moarwiki" to your .bashrc. (Then enter "source ~/.bashrc"
-# into your terminal, lest you must await the next reboot.)
-
-echo
-echo -n "Captain here! "; wiki $@ | tail -n +2 | head -c -2; echo " *Flies away*"
-echo

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# This script is for keybinding purposes. It is called from sxhkdrc.
+
+usage() {
+
+    echo
+    echo "Usage: screenshot OPTION"
+    echo
+    printf "\t-d\tTake screenshot of active desktop.\n"
+    printf "\t-w\tTake screenshot of active window.\n"
+    printf "\t-a\tTake screenshot of all monitors.\n"
+    printf "\t-s\tTake screenshot with slop selection (using the mouse).\n"
+    echo
+
+}
+
+target_file="$HOME/Pictures/screenshots/$( date +%F_%T).png"
+
+case $1 in
+    -d)
+        screengeometry=($( xdotool getdisplaygeometry )) 
+        width=${screengeometry[0]}
+        height=${screengeometry[1]}
+        maim -x 0 -y 0 -w $width -h $height $target_file
+        ;;
+    -w) maim -i $( xdotool getactivewindow ) $target_file ;;
+    -a) maim $target_file ;;
+    -s) maim -s $target_file ;;
+    -h|--help) usage ;;
+    *)
+        echo "$( basename $0 ): Invalid arguments: $@" >&2
+        echo
+        usage
+        exit 1
+        ;;
+esac
