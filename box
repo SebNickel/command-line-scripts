@@ -4,35 +4,55 @@
 # Simple timeboxing tool
 #
 
+boxfile="$HOME/.pal/box.pal"
+
 if [ $# -eq 0 ]; then
     today=$( date +%Y%m%d )
-    readarray boxes < <( grep "$today" $HOME/.pal/box.pal )
+    readarray boxes < <( grep "$today" $boxfile )
     pal
     echo
-    select box in "$boxes"; do
+    select box in "${boxes[@]}"; do
         if [ -z "$box" ]; then
             echo "Invalid selection."
         else
-            i=0
+            words=( $box )
+            minutes=${words[1]}
+            seconds=${words[2]}
+            description=$( echo $box | cut -d " " -f 4- | tr -d "\n" ) 
+            echo
+            echo "[Shift+P to pause.]"
+            echo
             while true; do
-                echo -ne "$( echo "$box" | tr -d "\n" ) : $i\r"
+                printf "%s: %3d:%02d\r" "$description" "$minutes" "$seconds"
+                if [ "$minutes" -eq 0 ] && [ "$seconds" -eq 0 ]; then
+                    echo
+                    echo "You're done!"
+                    echo "$( sed "/$( echo $box | tr -d "\n" )/d" $boxfile )" > $boxfile
+                    break
+                fi
                 read -s -n 1 -t 1 input
                 if [ "$input" = "P" ]; then
                     echo; echo
-                    echo "You've hit P."
-                    echo "i is $i."
+                    echo "Time remaining: $minutes min, $seconds seconds."
+                    echo "$( sed "/$( echo $box | tr -d "\n" )/d" $boxfile )" > $boxfile
+                    echo "$today $minutes $seconds $description" >> $boxfile
                     break
                 elif [ ! -z "$input" ]; then
                     echo; echo
-                    echo "Invalid input: $i. Hit P to pause."
+                    echo "Invalid input: $input. Hit P to pause."
                     echo
                     sleep 1
                 fi
-                i=$(( $i + 1 ))
+                seconds=$(( $seconds - 1 ))
+                if [ "$seconds" -lt 0 ]; then
+                    minutes=$(( $minutes - 1 ))
+                    seconds=59
+                fi
             done
             break
         fi
     done
 else
     qp -p box "$@"
+    echo "Boxed."
 fi
