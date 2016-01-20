@@ -259,7 +259,7 @@ main() {
         exit 0
     fi
 
-    getopts :cdeEhlrstu opt
+    getopts :cdeEhlmrstu opt
 
     case $opt in
         c) clear_stack_file $stack_full_path ;;
@@ -268,6 +268,9 @@ main() {
         E) $EDITOR $( list_files $stack_dir ) ;;
         h) usage ;;
         l) print_all "$stack_dir" | vimpager -c "set nonumber" ;;
+        m)
+            echo "Type text and hit Enter to stack it, rince and repeat. Ctrl+D to quit."
+            cat >> $stack_full_path ;;
         r) remove_node $stack_dir ;;
         s) sed_edit $stack_full_path ;;
         t) tac $stack_full_path | cat -n ;;

@@ -9,7 +9,7 @@ boxfile="$HOME/.boxfile"
 if [ $# -eq 0 ] || [ "$1" = "-a" ]; then
     today=$( date +%m%d )
     if [ "$1" = "-a" ]; then
-        readarray boxes < <( tail -n +1 $boxfile | sort )
+        readarray boxes < <( sort $boxfile )
     else
         readarray boxes < <( grep "$today" $boxfile )
     fi
@@ -34,9 +34,10 @@ if [ $# -eq 0 ] || [ "$1" = "-a" ]; then
             while true; do
                 printf "%s: %3d:%02d\r" "$description" "$minutes" "$seconds"
                 if [ "$minutes" -eq 0 ] && [ "$seconds" -eq 0 ]; then
+                    mpc toggle > /dev/null
                     echo
                     echo "You're done!"
-                    echo "$( sed "/$box/d" $boxfile )" > $boxfile
+                    echo "$( sed "/$( echo $box | tr -d "\n" )/d" $boxfile )" > $boxfile
                     break
                 fi
                 read -s -n 1 -t 1 input
@@ -62,7 +63,7 @@ if [ $# -eq 0 ] || [ "$1" = "-a" ]; then
         fi
     done
 elif [ "$1" = "-l" ]; then
-    tail -n +1 $boxfile | sort
+    sort $boxfile
 else
     echo "$@" >> $boxfile
     echo "Boxed."
