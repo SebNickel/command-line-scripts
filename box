@@ -6,9 +6,13 @@
 
 boxfile="$HOME/.pal/box.pal"
 
-if [ $# -eq 0 ]; then
+if [ $# -eq 0 ] || [ "$1" = "-a" ]; then
     today=$( date +%Y%m%d )
-    readarray boxes < <( grep "$today" $boxfile )
+    if [ "$1" = "-a" ]; then
+        readarray boxes < <( tail -n +2 $boxfile | sort )
+    else
+        readarray boxes < <( grep "$today" $boxfile )
+    fi
     pal
     echo
     select box in "${boxes[@]}"; do
@@ -52,6 +56,8 @@ if [ $# -eq 0 ]; then
             break
         fi
     done
+elif [ "$1" = "-l" ]; then
+    tail -n +2 $boxfile | sort
 else
     qp -p box "$@"
     echo "Boxed."
