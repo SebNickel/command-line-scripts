@@ -5,7 +5,7 @@
 #       reduced by as many lines as needed for the message.
 # Todo: Allow the user to specify a maximum height lower than the height of the terminal.
 
-AVAILABLE_LINES=$(( $( tput lines ) - 1 ))
+AVAILABLE_LINES=$(( $( tput lines ) - 3 ))
 AVAILABLE_COLUMNS=$( tput cols )
 
 TTY_ASPECT_RATIO=$( echo "$AVAILABLE_COLUMNS / ( 2 * $AVAILABLE_LINES )" | bc -l )

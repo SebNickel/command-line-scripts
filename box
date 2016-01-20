@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#
+# Simple timeboxing tool
+#
+
+if [ $# -eq 0 ]; then
+    today=$( date +%Y%m%d )
+    readarray boxes < <( grep "$today" $HOME/.pal/box.pal )
+    pal
+    echo
+    select box in "$boxes"; do
+        if [ -z "$box" ]; then
+            echo "Invalid selection."
+        else
+            i=0
+            while true; do
+                echo -ne "$( echo "$box" | tr -d "\n" ) : $i\r"
+                read -s -n 1 -t 1 input
+                if [ "$input" = "P" ]; then
+                    echo; echo
+                    echo "You've hit P."
+                    echo "i is $i."
+                    break
+                elif [ ! -z "$input" ]; then
+                    echo; echo
+                    echo "Invalid input: $i. Hit P to pause."
+                    echo
+                    sleep 1
+                fi
+                i=$(( $i + 1 ))
+            done
+            break
+        fi
+    done
+else
+    qp -p box "$@"
+fi

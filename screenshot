@@ -7,7 +7,7 @@ usage() {
     echo
     echo "Usage: screenshot OPTION"
     echo
-    printf "\t-d\tTake screenshot of active desktop.\n"
+    printf "\t-d\tTake screenshot of main desktop.\n"
     printf "\t-w\tTake screenshot of active window.\n"
     printf "\t-a\tTake screenshot of all monitors.\n"
     printf "\t-s\tTake screenshot with slop selection (using the mouse).\n"

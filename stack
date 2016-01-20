@@ -26,7 +26,7 @@ list_dirs() {
 
     for i in "$@"; do
         if [ -d $i ]; then
-            echo "$( echo $i | cut -b $(( ${#STACK_ROOT} + 2 ))- )"
+            echo "$indent $( echo $i | cut -b $(( ${#STACK_ROOT} + 2 ))- )"
             list_dirs $i/*
         fi
     done 
@@ -87,7 +87,7 @@ clear_stack_file() {
     stack_file="$( basename $stack_full_path )"
 
     local prompt
-    prompt="Clear $stack_file? [y/n]"
+    prompt="Clear $stack_file? [y/n] "
     
     while true; do
         read -p "$prompt" -n 1 answer
@@ -116,7 +116,7 @@ remove_node() {
     echo
 
     local prompt
-    prompt="Confirm? [y/n]"
+    prompt="Confirm? [y/n] "
 
     local answer
 
@@ -137,41 +137,67 @@ remove_node() {
 
 }
 
+remove_last_line() {
+
+    local stack_full_path="$1"
+
+    local new_file_content
+    new_file_content="$( head -n -1 $stack_full_path )"
+
+    if [ -z "$new_file_content" ]; then
+        echo -n > $stack_full_path
+    else
+        echo "$new_file_content" > $stack_full_path
+    fi
+
+    echo "Deleted last line."
+
+}
+
 sed_edit() {
 
     local stack_full_path="$1"
 
     echo
-    cat -n $stack_full_path
+    cat -n $stack_full_path | sed 's/   //g;s/\t/  /g'
     echo
 
     local commands
     read -p "sed " commands
 
+    local full_command
+    full_command="sed $commands $stack_full_path"
+
     echo
-    echo "Command: sed $commands $stack_full_path"
+    echo "Command: $full_command"
+
+    if ! $full_command > /dev/null; then
+        echo
+        echo "Faulty sed command. Aborting."
+        return 1
+    fi
 
     while true; do
         local answer
         echo
-        printf "\ta) Abort.\n"
+        printf "\tc) Cancel.\n"
         printf "\tv) View result without saving, then return to this prompt.\n"
         printf "\tw) Overwrite the file with the result of this command.\n"
         echo
-        read -p "[a/v/w]? " -n 1 answer
+        read -p "[c/v/w]? " -n 1 answer
         echo
         case $answer in
-            a)
+            c)
                 echo
-                echo "Aborting."
+                echo "Cancelled."
                 break
                 ;;
             v)
                 echo
-                sed $commands $stack_full_path | cat -n
+                $full_command | cat -n
                 ;;
             w)
-                echo "$( sed "$commands" $stack_full_path )" > $stack_full_path
+                echo "$( $full_command )" > $stack_full_path
                 echo
                 echo "Overwritten."
                 break
@@ -221,7 +247,10 @@ main() {
     stack_full_path="${stack_dir}/${stack_file}"
 
     if [ "$#" -eq 0 ]; then
-        cat -n $stack_full_path
+        echo
+        cat -n $stack_full_path | sed 's/   //g;s/\t/  /g'
+        echo
+        list_dirs ${stack_dir}/*
         exit 0
     fi
 
@@ -230,7 +259,7 @@ main() {
         exit 0
     fi
 
-    getopts :cdeEhlrst opt
+    getopts :cdeEhlrstu opt
 
     case $opt in
         c) clear_stack_file $stack_full_path ;;
@@ -242,6 +271,7 @@ main() {
         r) remove_node $stack_dir ;;
         s) sed_edit $stack_full_path ;;
         t) tac $stack_full_path | cat -n ;;
+        u) remove_last_line $stack_full_path ;;
         *)
             echo "$@" >> $stack_full_path
             echo "Stacked."
