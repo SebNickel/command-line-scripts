@@ -18,7 +18,7 @@ load() {
     search_type=${most_recent[1]}
 
     local title
-    title=${most_recent[2]}
+    title=${most_recent[@]:2}
 
     mpc search "$search_type" "$title" | mpc insert
     mpc next
