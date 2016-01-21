@@ -1,0 +1,79 @@
+#!/bin/bash
+
+#
+# "audiobook client", saves and loads the position of a track to file,
+# plays and pauses it via mpc
+#
+
+savefile="$HOME/.abc"
+
+load() {
+    local most_recent
+    most_recent=($( tail -1 $savefile ))
+    
+    local position
+    position=${most_recent[0]}
+
+    local search_type
+    search_type=${most_recent[1]}
+
+    local title
+    title=${most_recent[2]}
+
+    mpc search "$search_type" "$title" | mpc insert
+    mpc next
+    mpc seek $position
+}
+
+save() {
+    local most_recent
+    most_recent=($( tail -1 $savefile ))
+
+    local search_type
+    search_type=${most_recent[1]}
+
+    local title
+    title=${most_recent[@]:2}
+    
+    local position
+    position=$( mpc toggle | sed 's/ /\n/g' | grep -o -e ".*:../" | tr -d "/" )
+
+    echo $bc( sed "/$search_type $title/d" $savefile ) > $savefile
+    echo "$position $search_type $title" >> $savefile
+}
+
+new() {
+    local search_type
+
+    if [ "$1" = "-t" ]; then
+        search_type="$2"
+        shift
+        shift
+    else
+        search_type="title"
+    fi
+
+    local title
+    title="$@"
+
+    echo "0:00 $search_type $title" >> $savefile
+
+    mpc search "$search_type" "$title" | mpc insert
+    mpc next
+}
+
+main() {
+    if [ "$#" -ne 0 ]; then
+        new "$@"
+    else
+        local current_status
+        current_status=$( mpc status | sed 's/ /\n/g' | grep -e "\[.*\]" )
+        if [ "$current_status" = "[paused]" ]; then
+            load
+        else
+            save
+        fi
+    fi
+}
+
+main $@
