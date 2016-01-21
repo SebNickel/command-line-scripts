@@ -64,6 +64,22 @@ if [ $# -eq 0 ] || [ "$1" = "-a" ]; then
     done
 elif [ "$1" = "-l" ]; then
     sort $boxfile
+elif [ "$1" = "-e" ]; then
+    tmpfile=$( mktemp $HOME/.box.XXX )
+    sort $boxfile > $tmpfile
+    mv $tmpfile $boxfile
+    vim $boxfile
+elif [ "$#" -eq 1 ] && [[ "$1" =~ [0-9]+ ]]; then
+    boxdate="$1"
+    echo "Ctrl+\ to quit."
+    trap "echo -e \"\r\"; exit 0" SIGQUIT
+    while true; do
+        read -p "$boxdate " input
+        words=($input)
+        minutes=${words[0]}
+        echo "$boxdate $minutes 00 ${words[@]:1}" >> $boxfile
+        echo "Boxed."
+    done
 else
     boxdate="$1"
     minutes="$2"
