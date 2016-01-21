@@ -21,7 +21,7 @@ load() {
     title=${most_recent[@]:2}
 
     mpc search "$search_type" "$title" | mpc insert
-    mpc next
+    mpc next > /dev/null
     mpc seek $position
 }
 
@@ -38,7 +38,7 @@ save() {
     local position
     position=$( mpc toggle | sed 's/ /\n/g' | grep -o -e ".*:../" | tr -d "/" )
 
-    echo $bc( sed "/$search_type $title/d" $savefile ) > $savefile
+    echo $( sed "/$search_type $title/d" $savefile ) > $savefile
     echo "$position $search_type $title" >> $savefile
 }
 
