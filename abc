@@ -40,6 +40,10 @@ save() {
 
     echo $( sed "/$search_type $title/d" $savefile ) > $savefile
     echo "$position $search_type $title" >> $savefile
+
+    echo "Position saved."
+
+    mpc del 0
 }
 
 new() {

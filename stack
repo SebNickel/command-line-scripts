@@ -44,8 +44,12 @@ print_all() {
 
     for i in "$@"; do
         if [ -d $i ]; then
-            echo "$( echo $i | cut -b $(( ${#STACK_ROOT} + 2 ))- )"
-            echo
+            local dir
+            dir="$( echo $i | cut -b $(( ${#STACK_ROOT} + 2 ))- )"
+            if [ ! -z "$dir" ]; then
+                echo "$dir"
+                echo
+            fi
             print_all $i/*
         fi
     done 
