@@ -8,6 +8,8 @@
 savefile="$HOME/.abc"
 
 load() {
+    local current_status="$1"
+
     local most_recent
     most_recent=($( tail -1 $savefile ))
     
@@ -21,7 +23,13 @@ load() {
     title=${most_recent[@]:2}
 
     mpc search "$search_type" "$title" | mpc insert
-    mpc next > /dev/null
+
+    if [ "$current_status" = "[paused]" ]; then
+        mpc next > /dev/null
+    else
+        mpc play > /dev/null
+    fi
+
     mpc seek $position
 }
 
@@ -72,10 +80,10 @@ main() {
     else
         local current_status
         current_status=$( mpc status | sed 's/ /\n/g' | grep -e "\[.*\]" )
-        if [ "$current_status" = "[paused]" ]; then
-            load
-        else
+        if [ "$current_status" = "[playing]" ]; then
             save
+        else
+            load $current_status
         fi
     fi
 }
