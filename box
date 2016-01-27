@@ -85,6 +85,7 @@ else
     minutes="$2"
     shift
     shift
-    echo "$boxdate $minutes 00 $@" >> $boxfile
+    escaped_contents=$( echo "$@" | tr '/' '_' )
+    echo "$boxdate $minutes 00 $escaped_contents" >> $boxfile
     echo "Boxed."
 fi

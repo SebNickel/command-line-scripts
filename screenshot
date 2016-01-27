@@ -15,7 +15,7 @@ usage() {
 
 }
 
-target_file="$HOME/Pictures/screenshots/$( date +%F_%T).png"
+target_file="$HOME/pictures/screenshots/$( date +%F_%T).png"
 
 case $1 in
     -d)
