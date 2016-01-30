@@ -2,6 +2,8 @@
 
 # TODO: One case in which it doesn't work right is "wiki gimlet". Figure out why, fix.
 
+language_prefix="en"
+
 if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo
     echo "Usage: wiki <search terms>"
@@ -37,9 +39,15 @@ if [ $# = 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     exit 0
 fi
 
+if [ "$1" = "-l" ] || [ "$1" = "--language" ]; then
+    language_prefix=$2
+    shift
+    shift
+fi
+
 QUERY=$( IFS=+; echo "$*" )
 
-LOCATIONLINE=($( curl -vsS https://en.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r' ))
+LOCATIONLINE=($( curl -vsS https://${language_prefix}.wikipedia.org/w/index.php?search=$QUERY 2>&1 | grep "< Location:" | tr -d '\r' ))
 
 if [ -z $LOCATIONLINE ]; then
     echo No results.
