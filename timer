@@ -33,7 +33,7 @@ fi
 (
     sleep $@ 2>/dev/null || error
     mpc -q toggle
-    urxvt -hold -e bash -c "bspc window -t fullscreen && slideshow $MESSAGE" &&
+    urxvt -hold -e bash -c "bspc node -t fullscreen && slideshow $MESSAGE" &&
     echo "Have you done the thing?"
 ) &
 

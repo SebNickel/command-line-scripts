@@ -1,0 +1,5 @@
+#!/bin/bash
+
+while true; do
+    printf "$( date +%a\ %d\ %b\ %Y\ \ \ \ %T )\r"; 
+done

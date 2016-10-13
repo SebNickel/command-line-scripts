@@ -1,17 +1,56 @@
 #!/bin/bash
 
-if [ "$1" = "-m" ]; then
-    MESSAGE="$2"
-    shift
-    shift
-else
-    MESSAGE=
-fi
+create_alarm() {
 
-OUTPUT=$(
-    echo "mpc -q toggle && urxvt -e bash -c \"bspc window -t fullscreen && slideshow $MESSAGE\"" | at $@ 2>&1
-)
+    if [ "$1" = "-m" ]; then
+        message="$2"
+        shift
+        shift
+    else
+        message=
+    fi
 
-TIME=$(echo $OUTPUT | grep --color=never -o at.* | cut -d " " -f 2-)
+    output=$(
+        echo "mpc -q toggle && urxvt -e bash -c \"bspc node -t fullscreen && slideshow $message\"" | at $@ 2>&1
+    )
+    
+    job_nr=$( echo $output | grep --color=never -o job.* | cut -d " " -f 2 )
+    
+    alarm_time=$( echo $output | grep --color=never -o at.* | cut -d " " -f 2- )
+    
+    echo -e "${job_nr}\t${alarm_time}\t$message" >> $HOME/.alarm
+    
+    echo "Alarm set for ${alarm_time}"
 
-echo "Alarm set for $TIME"
+}
+
+list_alarms() {
+
+    cat $HOME/.alarm
+    #TODO: Format table
+
+}
+
+remove_alarm() {
+
+    local job_nr="$1"
+    
+    atrm $1
+
+    #TODO: Delete line from .alarm file
+
+}
+
+main() {
+
+    case "$1" in
+        -l) list_alarms ;;
+        -r) remove_alarm "$2" ;;
+        *) create_alarm "$@" ;;
+    esac
+
+    exit 0
+
+}
+
+main "$@"

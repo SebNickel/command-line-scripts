@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [[ "X$1" == "X-h" || "X$1" == "X--help" ]] || (( $# < 2 )) ; then
+    echo "mergepdf OUTPUT_FILE INPUT_FILES...";
+    echo "Concatenates the pdfs listed in INPUT_FILES... in a new pdf called OUTPUT_FILE.";
+    exit;
+fi
+
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for i in $( ls /usr/share/figlet/*.tlf | cut -d / -f 5 | cut -d . -f 1 ); do
+    toilet -f $i -t $@ $i
+done
